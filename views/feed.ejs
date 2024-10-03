@@ -1,0 +1,162 @@
+<% include ./partials/header.ejs %>
+  <div class="w-full min-h-screen bg-zinc-900 text-white py-5">
+    <div class="w-full px-4 flex items-center justify-between">
+      <img class="w-1/4" src="/images/logo.png" alt="">
+      <div class="icons -mt-2 flex gap-5 items-center">
+        <i class="text-[1.4rem] ri-heart-3-line"></i>
+        <i class="text-[1.4rem] ri-messenger-line"></i>
+      </div>
+    </div>
+    <div class="story px-3 flex gap-3 overflow-auto mt-5">
+
+      <div class="circle flex-shrink-0">
+        <div
+          class="gradient w-[18vw] h-[18vw] bg-sky-100 rounded-full bg-gradient-to-r from-purple-700 to-orange-500 flex items-center justify-center">
+          <div class="inner w-[92%] h-[92%] rounded-full overflow-hidden">
+            <img class="w-full h-full object-cover"
+              src="/images/uploads/<%= user.profileImage %>"
+              alt="">
+          </div>
+        </div>
+      </div>
+
+
+      
+      
+      
+    </div>
+    <div class="posts mb-20">
+        <% post.reverse().forEach(function(posts){%>
+          <div class="post mt-10 w-full min-h-[50vh] object-cover">
+            <div class="title px-4 flex items-center gap-2">
+              <div class="w-[8vw] h-[8vw] bg-sky-100 rounded-full overflow-hidden">
+                <img class="h-full w-full object-cover relative" src="/images/uploads/<%= posts.user.profileImage %>" alt="">
+              </div>
+              <h4 class="text-sm">
+                <%= posts.user.username %>
+              </h4>
+
+              <h6 class="text-xs opacity-30">1d</h6> <!--   // DATE -->
+            </div>
+
+            <!-- FROM here -->
+            <div class="w-full h-96 mt-4 bg-sky-100 overflow-hidden relative">
+              <img data-postid="<%= posts.id %>" class="postimg w-full h-full object-cover"
+                src="images/uploads/<%=posts.picture%>" alt="">
+            </div>
+
+
+            <div class="options w-full px-4 flex justify-between items-center text-[1.4rem]">
+            <div class="flex gap-3 mt-2">
+              <% if(posts.likes.indexOf(user._id)===-1){ %>
+                <i class="heart ri-heart-3-line"></i>
+                <% } else { %>
+                  <i class="heart ri-heart-3-fill text-red-500" z-0></i>
+                  <% } %>
+                    <i class="ri-chat-3-line"></i>
+                    <i class="ri-share-circle-line"></i>
+            </div>
+
+            <!-- //HERE IS SAVE -->
+            <!-- <i class=" ri-bookmark-line"></i> -->
+            <% if(user.savedPost.indexOf(posts.id) !== -1) { %>
+              <i data-savedpostid="<%=posts.id%>" class="save ri-bookmark-fill"></i>
+              <%} else{ %>
+                <i data-savedpostid="<%=posts.id%>" class="save ri-bookmark-line"></i>
+            <%}%>
+           
+
+          </div>
+            <h3 class="likevalue px-4 mt-2 text-sm leading-none tracking-tight">
+              <%= posts.likes.length %> likes
+            </h3>
+            <h2 class="text-white font-light text-sm mt-2"><span class="font-semibold pl-4 pr-2">
+                <%= user.username %>
+              </span>
+              <%= posts.caption %>
+            </h2>
+          </div>
+
+          <% })%>
+          
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+    integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer">
+    </script>
+
+  <script>
+
+    /////////////////////// THIS IS FOR THE LIKE  ///////////////////////
+
+    document.querySelector('.posts')
+      .addEventListener("click", function (dets) {
+        let post = dets.target.parentNode.parentNode        
+        let heartwithborder = post.querySelector(".heart")
+        if (dets.target.classList.contains("postimg")) {
+
+          if (heartwithborder.classList.contains("ri-heart-3-line")) {
+            heartwithborder.classList.remove("ri-heart-3-line")
+            heartwithborder.classList.add("ri-heart-3-fill")
+            heartwithborder.classList.add("text-red-500")
+          }
+
+          else {
+            heartwithborder.classList.remove("ri-heart-3-fill");
+            heartwithborder.classList.remove("text-red-500");
+            heartwithborder.classList.add("ri-heart-3-line");
+          }
+          fetch(`/like/${dets.target.dataset.postid}`)
+            .then(raw => raw.json())
+            .then(response => {
+              post.querySelector(".likevalue").textContent = response.likes.length + " likes"
+            })
+          var icon = document.createElement("i");
+          icon.classList.add("ri-heart-3-fill", "text-red-700", "text-6xl", 'absolute', 'top-1/2', 'left-1/2', '-translate-x-[50%]', '-translate-y-[50%]', 'z-[9]')
+          dets.target.parentNode.appendChild(icon);
+
+          gsap.from(icon, {
+            scale: .5,
+            y: 30,
+            opacity: 0,
+            ease: Expo,
+            duration: .3
+          })
+
+          gsap.to(icon, {
+            scale: 0,
+            y: -30,
+            opacity: 0,
+            duration: .3,
+            ease: Expo,
+            delay: .3,
+            onComplete: () => {
+              dets.target.parentNode.removeChild(icon);
+            }
+          })
+        }
+        /////////////////////// THIS IS FOR THE SAVE ///////////////////////
+        if(dets.target.classList.contains("save")){
+         
+          fetch(`/save/${dets.target.dataset.savedpostid}`)
+          .then(raw => raw.json())
+          .then( response =>{
+            if (!dets.target.classList.contains("ri-bookmark-line")) {
+                dets.target.classList.remove("ri-bookmark-fill", "text-zinc-100");
+                dets.target.classList.add("ri-bookmark-line")
+              }
+              else {
+                dets.target.classList.remove("ri-bookmark-line")
+                dets.target.classList.add("ri-bookmark-fill", "text-zinc-100")
+              }
+          })
+        }
+
+      })
+
+
+
+  </script>
+
+  <% include ./partials/footer.ejs %>
